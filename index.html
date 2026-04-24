@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>USDT Albania</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0b0e11;
+  color:white;
+}
+
+header{
+  padding:15px;
+  background:#111;
+  text-align:center;
+  font-size:22px;
+  color:#f0b90b;
+}
+
+.container{
+  padding:20px;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  border-bottom:1px solid #222;
+}
+
+.loading{
+  color:#888;
+}
+</style>
+</head>
+
+<body>
+
+<header>🚀 USDT Albania</header>
+
+<div class="container">
+
+<div class="row">
+<span>BTC / USDT</span>
+<span id="btc" class="loading">Loading...</span>
+</div>
+
+<div class="row">
+<span>ETH / USDT</span>
+<span id="eth" class="loading">Loading...</span>
+</div>
+
+<div class="row">
+<span>BNB / USDT</span>
+<span id="bnb" class="loading">Loading...</span>
+</div>
+
+</div>
+
+<script>
+
+// 🔥 SAFE version (me fallback)
+async function loadPrices(){
+  try{
+    let res = await fetch("https://api.binance.com/api/v3/ticker/price");
+    let data = await res.json();
+
+    function get(sym){
+      let item = data.find(x => x.symbol === sym);
+      return item ? item.price : "N/A";
+    }
+
+    document.getElementById("btc").innerText = "$"+parseFloat(get("BTCUSDT")).toFixed(2);
+    document.getElementById("eth").innerText = "$"+parseFloat(get("ETHUSDT")).toFixed(2);
+    document.getElementById("bnb").innerText = "$"+parseFloat(get("BNBUSDT")).toFixed(2);
+
+  } catch(e){
+    // fallback që NUK e bën faqen të bardhë
+    document.getElementById("btc").innerText = "offline";
+    document.getElementById("eth").innerText = "offline";
+    document.getElementById("bnb").innerText = "offline";
+  }
+}
+
+loadPrices();
+
+</script>
+
+</body>
+</html>
