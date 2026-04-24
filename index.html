@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USDT Albania | Trading Platform</title>
+    <style>
+        :root { --gold: #f0b90b; --bg: #0b0e11; --panel: #1e2329; --up: #0ecb81; --down: #f6465d; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; }
+        .auth-container { max-width: 400px; margin: 40px auto; padding: 30px; background: var(--panel); border-radius: 15px; text-align: center; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .logo-img { width: 140px; height: 140px; margin: 0 auto 20px; border-radius: 50%; border: 2px solid var(--gold); display: block; object-fit: cover; }
+        input, select { width: 90%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #474d57; background: #2b3139; color: white; outline: none; }
+        input:focus { border-color: var(--gold); }
+        button { width: 95%; padding: 12px; background: var(--gold); border: none; cursor: pointer; font-weight: bold; border-radius: 6px; margin-top: 10px; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        #main-app { display: none; }
+        .header { background: #181a20; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b3139; }
+        .grid { display: grid; grid-template-columns: 1fr 340px; gap: 10px; padding: 10px; }
+        .trade-panel { background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid #333; }
+        .stat-card { background: #2b3139; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--gold); }
+        .buy-btn { background: var(--up); color: white; }
+        .sell-btn { background: var(--down); color: white; }
+        #live-price { font-size: 26px; color: var(--gold); font-weight: bold; margin: 10px 0; }
+        @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div id="auth-section" class="auth-container">
+        <img src="https://i.ibb.co/68032tS/usdtalbania.png" class="logo-img" alt="USDT Albania Logo">
+        <h2 id="auth-title" style="color: var(--gold); margin-bottom: 20px;">Hyr në USDT Albania</h2>
+        
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="pass" placeholder="Fjalëkalimi">
+        
+        <div id="login-tools">
+            <button onclick="handleAuth('login')">HYR</button>
+            <p style="font-size: 13px; color: gray; margin-top: 15px;">
+                Nuk ke llogari? <a href="#" onclick="toggleAuth(true)" style="color: var(--gold); text-decoration: none;">Regjistrohu këtu</a>
+            </p>
+        </div>
+
+        <div id="register-tools" style="display: none;">
+            <button onclick="handleAuth('reg')" style="background: #555; color: white;">KRIJO LLOGARINË</button>
+            <p style="font-size: 13px; color: gray; margin-top: 15px;">
+                Ke llogari? <a href="#" onclick="toggleAuth(false)" style="color: var(--gold); text-decoration: none;">Kthehu te Log In</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="header">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <img src="https://i.ibb.co/68032tS/usdtalbania.png" height="35" style="border-radius:50%">
+                <strong style="color:var(--gold)">USDT Albania</strong>
+            </div>
+            <div style="font-size:13px;"><span id="user-display"></span> | <a href="#" onclick="location.reload()" style="color:var(--gold)">Dil</a></div>
+        </div>
+
+        <div class="grid">
+            <div id="tradingview_chart" style="height: 600px;"></div>
+            <div class="trade-panel">
+                <div class="stat-card">
+                    <small style="color:gray">BILANCI (EUR)</small>
+                    <h2 id="balance-eur" style="margin:5px 0;">1,000.00 €</h2>
+                </div>
+                <div id="trade-info-box" class="stat-card" style="border-left-color: #555; display:none;">
+                    <small style="color:gray">POZICIONI AKTUAL</small>
+                    <div id="pnl-display" style="margin-top:5px; font-size:14px;">---</div>
+                </div>
+                <select id="asset-select" onchange="changeAsset()">
+                    <option value="BTC">Bitcoin (BTC/EUR)</option>
+                    <option value="ETH">Ethereum (ETH/EUR)</option>
+                    <option value="SOL">Solana (SOL/EUR)</option>
+                    <option value="BNB">Binance (BNB/EUR)</option>
+                </select>
+                <select id="leverage-select">
+                    <option value="1">Leva 1:1</option>
+                    <option value="5">Leva 1:5</option>
+                    <option value="15">Leva 1:15</option>
+                    <option value="30">Leva 1:30</option>
+                    <option value="50">Leva 1:50</option>
+                </select>
+                <div id="live-price">---.-- €</div>
+                <input type="number" id="trade-amount" value="100">
+                <div style="display:flex; gap:10px;">
+                    <button class="buy-btn" onclick="openPosition('long')">BUY</button>
+                    <button class="sell-btn" onclick="openPosition('short')">SELL</button>
+                </div>
+                <button id="close-btn" style="display:none; background:#474d57; margin-top:15px;" onclick="closePosition()">MBYLL POZICIONIN</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC9tqFWgOWD8dSj8UAaGE_RFQnzKjD2mns",
+            authDomain: "usdt-albania.firebaseapp.com",
+            projectId: "usdt-albania",
+            storageBucket: "usdt-albania.firebasestorage.app",
+            messagingSenderId: "334664904932",
+            appId: "1:334664904932:web:d3c80b79275cd900b43cf1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let userUID = null;
+        let userData = { eur: 1000, trade: null };
+        let currentPrice = 0;
+
+        window.toggleAuth = (isReg) => {
+            document.getElementById('auth-title').innerText = isReg ? "Krijo Llogari të Re" : "Hyr në USDT Albania";
+            document.getElementById('login-tools').style.display = isReg ? 'none' : 'block';
+            document.getElementById('register-tools').style.display = isReg ? 'block' : 'none';
+        };
+
+        window.handleAuth = async (type) => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            if(!email || !pass) return alert("Plotësoni të dhënat!");
+
+            try {
+                if(type === 'reg') {
+                    const res = await createUserWithEmailAndPassword(auth, email, pass);
+                    await setDoc(doc(db, "users", res.user.uid), { eur: 1000, trade: null });
+                    await signOut(auth); // Shkyçe direkt pas regjistrimit
+                    alert("Llogaria u krijua! Tani mund të hyni (Login).");
+                    toggleAuth(false); // Ktheje te ekrani i Login
+                } else {
+                    const res = await signInWithEmailAndPassword(auth, email, pass);
+                    userUID = res.user.uid;
+                    const snap = await getDoc(doc(db, "users", userUID));
+                    userData = snap.data();
+                    document.getElementById('auth-section').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'block';
+                    document.getElementById('user-display').innerText = email;
+                    initTrading();
+                }
+            } catch (e) { alert("Gabim: " + e.message); }
+        };
+
+        function initTrading() {
+            loadChart();
+            setInterval(syncPrice, 2000);
+            setInterval(updateRealTimePNL, 1000);
+            updateUI();
+        }
+
+        async function syncPrice() {
+            const sym = document.getElementById('asset-select').value;
+            try {
+                const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${sym}EUR`);
+                const data = await res.json();
+                currentPrice = parseFloat(data.price);
+                document.getElementById('live-price').innerText = currentPrice.toLocaleString() + " €";
+            } catch (e) {}
+        }
+
+        window.openPosition = async (dir) => {
+            if(userData.trade) return alert("Keni një pozicion hapur!");
+            const amt = parseFloat(document.getElementById('trade-amount').value);
+            const lev = parseInt(document.getElementById('leverage-select').value);
+            if(amt > userData.eur || amt <= 0) return alert("Bilanc i pamjaftueshëm!");
+
+            userData.trade = { entry: currentPrice, amount: amt, leverage: lev, direction: dir, symbol: document.getElementById('asset-select').value };
+            await updateDoc(doc(db, "users", userUID), userData);
+            updateUI();
+        };
+
+        function updateRealTimePNL() {
+            if(!userData.trade) return document.getElementById('trade-info-box').style.display = 'none';
+            const t = userData.trade;
+            let diff = t.direction === 'long' ? (currentPrice - t.entry) : (t.entry - currentPrice);
+            let pnl = (diff / t.entry) * t.amount * t.leverage;
+            document.getElementById('trade-info-box').style.display = 'block';
+            document.getElementById('close-btn').style.display = 'block';
+            document.getElementById('pnl-display').innerHTML = `PNL: <b style="color:${pnl>=0?'#0ecb81':'#f6465d'}">${pnl.toFixed(2)} €</b>`;
+        }
+
+        window.closePosition = async () => {
+            const t = userData.trade;
+            let pnl = ((t.direction === 'long' ? currentPrice - t.entry : t.entry - currentPrice) / t.entry) * t.amount * t.leverage;
+            userData.eur += pnl;
+            userData.trade = null;
+            await updateDoc(doc(db, "users", userUID), userData);
+            updateUI();
+            alert("Pozicioni u mbyll!");
+        };
+
+        function updateUI() {
+            document.getElementById('balance-eur').innerText = userData.eur.toLocaleString(undefined, {minimumFractionDigits: 2}) + " €";
+        }
+
+        window.changeAsset = () => { syncPrice(); loadChart(); };
+        function loadChart() {
+            const sym = document.getElementById('asset-select').value;
+            new TradingView.widget({ "autosize": true, "symbol": `BINANCE:${sym}EUR`, "interval": "15", "theme": "dark", "container_id": "tradingview_chart" });
+        }
+    </script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
+</body>
+</html>
